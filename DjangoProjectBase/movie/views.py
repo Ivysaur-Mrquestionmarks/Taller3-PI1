@@ -23,6 +23,38 @@ def home(request):
 def about(request):
     #return HttpResponse('<h1>Welcome to About Page</h1>')
     return render(request, 'about.html')
+    
+def Recommend(request):
+    #return HttpResponse('<h1>Welcome to About Page</h1>')
+    searchTerm = request.GET.get('searchMovie') # GET se usa para solicitar recursos de un servidor
+    if searchTerm:
+            #Se lee del archivo .env la api key de openai
+        _ = load_dotenv('../openAI.env')
+        client = OpenAI(
+        # This is the default and can be omitted
+            api_key=os.environ.get('openAI_api_key'),
+        )
+        
+        items = Movie.objects.all()
+
+        req = searchTerm
+        emb_req = get_embedding(req, client)
+
+        sim = []
+        for i in range(len(items)):
+            emb = items[i].emb
+            emb = list(np.frombuffer(emb))
+            sim.append(cosine_similarity(emb,emb_req))
+        sim = np.array(sim)
+        #print(sim)
+        idx = np.argmax(sim)
+        idx = int(idx)
+        #print(items[idx].title)
+        searchTerm = items[idx].title
+        movies = Movie.objects.filter(title__icontains=searchTerm)
+    else:
+        movies = Movie.objects.all()
+    return render(request, 'Recommend.html',{'searchTerm':searchTerm, 'movies':movies})    
 
 def signup(request):
     email = request.GET.get('email') 
