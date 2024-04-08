@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 import io
 import urllib, base64
+import numpy as np
+from openai import OpenAI
+import os
+from dotenv import load_dotenv, find_dotenv
 
 def home(request):
     #return HttpResponse('<h1>Welcome to Home Page</h1>')
@@ -55,6 +59,13 @@ def Recommend(request):
     else:
         movies = Movie.objects.all()
     return render(request, 'Recommend.html',{'searchTerm':searchTerm, 'movies':movies})    
+    
+def get_embedding(text, client, model="text-embedding-3-small"):
+   text = text.replace("\n", " ")
+   return client.embeddings.create(input = [text], model=model).data[0].embedding
+
+def cosine_similarity(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))   
 
 def signup(request):
     email = request.GET.get('email') 
